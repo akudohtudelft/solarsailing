@@ -72,13 +72,39 @@ class Simulation:
         # Solar pressure uwu
         self.pointing_vector = self.get_pointing_vector(self.inci_angle)
         B = self.area * 2 * (self.star.We * self.star.R_ref ** 2) / speed_of_light / self.mass
-        self.a_sp = np.cos(self.inci_angle)*self.pointing_vector*(radial_distance**(-2))*B
+        self.a_sp = self.pointing_vector*np.cos(self.inci_angle)*(radial_distance**(-2))*B
 
         # Drag to be implemented...
 
         return a_g + self.a_sp
 
     def run_for_times(self, start_time, end_time, dt=0.1 * DAY, subdivisions=None):
+        if subdivisions is not None:
+            dt = (end_time - start_time) / subdivisions
+
+        ts = []
+        positions = []
+        velocities = []
+        accelerations = []
+
+        t = start_time
+        n_steps = int((end_time - start_time) / dt)
+
+        for _ in tqdm(range(n_steps), desc="Simulation progress"):
+            ts.append(t)
+            positions.append(self.position_vector.copy())
+            velocities.append(self.cart_velocity_vector.copy())
+            accelerations.append(self.a_sp.copy())
+
+            self.Euler_Rich_step(dt)
+            t += dt
+
+        self.ts = np.array(ts)
+        self.positions = np.array(positions)
+        self.velocities = np.array(velocities)
+        self.accelerations = np.array(accelerations)
+
+    def run_for_times_constant_rp(self, start_time, end_time, dt=0.1 * DAY, subdivisions=None):
         if subdivisions is not None:
             dt = (end_time - start_time) / subdivisions
 
@@ -179,6 +205,8 @@ def main():
     # differential Equation
     # a = B*r**(-2)
 
+    # Orbital spiraling
+
     Sun = Body(mu_sun, We, Re)
 
     initial_position = np.array([1*AU, 0])
@@ -188,7 +216,27 @@ def main():
     sim.run_for_times(0, 100*YEAR)
     sim.plot_results()
 
+def no_grav_run():
+    # constants
+    S = 2000000
+    We = 1361
+    Re = 1.495979 * 10 ** 11
+    c = speed_of_light
+    m = 0.5
+    B = S * 2 * (We * Re ** 2) / c / m
+    mu_sun = 1.3271244004210 * 10 ** 20
+
+    # No gravity
+
+    no_grav_Sun = Body(0, We, Re)
+    initial_position = np.array([1 * AU, 0])
+    initial_velocity = np.array([0, 0])
+
+    sim_no_grav = Simulation(S, m, initial_position, initial_velocity, no_grav_Sun, np.radians(0))
+    sim_no_grav.run_for_times(0, 100 * YEAR)
+    sim_no_grav.plot_results()
 
 
 if __name__ == "__main__":
     main()
+    # no_grav_run()
