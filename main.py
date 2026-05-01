@@ -63,7 +63,7 @@ class Simulation:
 
 
     def compute_accelerations(self, position_vector, cart_velocity_vector):
-        r_hat = self.position_vector / np.linalg.norm(position_vector)
+        r_hat = position_vector / np.linalg.norm(position_vector)
         # gravity lmao :)\
 
         radial_distance = np.linalg.norm(position_vector)
@@ -77,6 +77,20 @@ class Simulation:
         # Drag to be implemented...
 
         return a_g + self.a_sp
+
+    def update_inci_angle(self):
+        r = self.position_vector
+        v = self.cart_velocity_vector
+
+        r_hat = r / np.linalg.norm(r)
+        t_hat = rotate(np.radians(90), r_hat)
+
+        # velocity components
+        v_r = np.dot(v, r_hat)
+        v_t = np.dot(v, t_hat)
+
+        # incidence angle measured from radial direction
+        self.inci_angle = np.arctan2(v_t, v_r)
 
     def run_for_times(self, start_time, end_time, dt=0.1 * DAY, subdivisions=None):
         if subdivisions is not None:
@@ -115,8 +129,12 @@ class Simulation:
 
         t = start_time
         n_steps = int((end_time - start_time) / dt)
-
+        boundary_time = 0.5*YEAR
         for _ in tqdm(range(n_steps), desc="Simulation progress"):
+            if t<boundary_time:
+                self.inci_angle = -45
+            else:
+                self.update_inci_angle()
             ts.append(t)
             positions.append(self.position_vector.copy())
             velocities.append(self.cart_velocity_vector.copy())
@@ -213,7 +231,7 @@ def main():
     initial_velocity = Sun.get_circ_orbital_velocity(initial_position)
 
     sim = Simulation(S, m, initial_position, initial_velocity, Sun, np.radians(45))
-    sim.run_for_times(0, 100*YEAR)
+    sim.run_for_times_constant_rp(0, 100*YEAR)
     sim.plot_results()
 
 def no_grav_run():
