@@ -38,7 +38,7 @@ class Simulation:
         self.mass = mass
         self.pointing_vector = self.get_pointing_vector(self.inci_angle)
         B = self.area * 2 * (self.star.We * self.star.R_ref ** 2) / speed_of_light / self.mass
-        self.a_sp = np.cos(self.inci_angle) * self.pointing_vector * (np.linalg.norm(initial_position) ** (-2)) * B
+        self.a_sp = abs(np.cos(self.inci_angle)) * self.pointing_vector * (np.linalg.norm(initial_position) ** (-2)) * B
 
     def Euler_Rich_step(self, dt):
         an = self.compute_accelerations(self.position_vector, self.cart_velocity_vector)
