@@ -234,6 +234,30 @@ def main():
     sim.run_for_times_constant_rp(0, 100*YEAR)
     sim.plot_results()
 
+def solar_pressure():
+    # constants
+    S = 10000
+    We = 1361
+    Re = 1.495979 * 10**11
+    c = speed_of_light
+    m = 100
+    B = S*2*(We*Re**2)/c/m
+    mu_sun = 1.3271244004210* 10**20
+
+    # differential Equation
+    # a = B*r**(-2)
+
+    # Orbital spiraling
+
+    Sun = Body(mu_sun, We, Re)
+
+    initial_position = np.array([5*AU, 0])
+    initial_velocity = Sun.get_circ_orbital_velocity(initial_position)*0.5
+
+    sim = Simulation(S, m, initial_position, initial_velocity, Sun, np.radians(0))
+    sim.run_for_times(0, 100*YEAR, dt=0.1*DAY)
+    sim.plot_results()
+
 def no_grav_run():
     # constants
     S = 2000000
@@ -256,5 +280,6 @@ def no_grav_run():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
     # no_grav_run()
+    solar_pressure()
